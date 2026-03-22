@@ -1,0 +1,558 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer - AI-Powered Text Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #334155;
+            font-size: 0.95em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea::placeholder {
+            color: #cbd5e1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-analyze:active {
+            transform: translateY(0);
+        }
+
+        .btn-clear {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-clear:hover {
+            background: #cbd5e1;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            display: none;
+            background: #fee2e2;
+            border: 2px solid #fca5a5;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.Positive {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid #6ee7b7;
+        }
+
+        .result.Negative {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #fca5a5;
+        }
+
+        .result.Neutral {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border: 2px solid #a5b4fc;
+        }
+
+        .sentiment {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sentiment-emoji {
+            font-size: 1.2em;
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .detail-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .cleaned-text-box {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            grid-column: 1 / -1;
+        }
+
+        .cleaned-text-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cleaned-text-value {
+            color: #1e293b;
+            font-size: 0.95em;
+            line-height: 1.6;
+            word-break: break-word;
+            font-style: italic;
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-copy:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .history {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .history h3 {
+            color: #334155;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .history-item {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .history-text {
+            flex: 1;
+            color: #475569;
+            font-size: 0.9em;
+            word-break: break-word;
+        }
+
+        .history-sentiment {
+            font-weight: 700;
+            margin-left: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        .sentiment-badge-positive {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .sentiment-badge-negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .sentiment-badge-neutral {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .empty-history {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 0.95em;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .result-details {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            textarea {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Sentiment Analyzer</h1>
+            <p>Instantly analyze the sentiment of any text</p>
+        </div>
+
+        <div class="content">
+            <div class="input-group">
+                <label for="reviewText">Enter your text to analyze:</label>
+                <textarea id="reviewText" placeholder="Paste a review, comment, or any text you'd like to analyze..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-analyze" onclick="analyze()">Analyze Sentiment</button>
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your text...</p>
+            </div>
+
+            <div class="result" id="resultBox">
+                <div class="sentiment">
+                    <span class="sentiment-emoji" id="sentimentEmoji"></span>
+                    <span id="sentimentLabel"></span>
+                </div>
+
+                <div class="result-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Confidence Score</div>
+                        <div class="detail-value" id="confidenceLabel"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Analysis Model</div>
+                        <div class="detail-value" id="modelLabel">VADER</div>
+                    </div>
+                    <div class="cleaned-text-box">
+                        <div class="cleaned-text-label">Processed Text</div>
+                        <div class="cleaned-text-value" id="cleanedText"></div>
+                        <button class="btn-copy" onclick="copyText()">📋 Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history">
+                <h3>📜 Recent Analyses</h3>
+                <div id="historyContainer" class="empty-history">
+                    No analyses yet. Start by analyzing your first text!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analysisHistory = [];
+
+        async function analyze() {
+            const text = document.getElementById('reviewText').value;
+            const errorBox = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
+
+            errorBox.style.display = 'none';
+            errorBox.textContent = '';
+
+            if (!text.trim()) {
+                errorBox.textContent = '⚠️ Please enter some text to analyze';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            if (text.trim().length < 3) {
+                errorBox.textContent = '⚠️ Please enter at least 3 characters';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            loading.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to analyze text');
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                displayResult(data);
+                addToHistory(data);
+            } catch (error) {
+                errorBox.textContent = '❌ Error: ' + error.message;
+                errorBox.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayResult(data) {
+            const sentimentEmoji = {
+                'Positive': '😊',
+                'Negative': '😞',
+                'Neutral': '😐'
+            }[data.sentiment] || '🤔';
+
+            document.getElementById('sentimentEmoji').textContent = sentimentEmoji;
+            document.getElementById('sentimentLabel').textContent = data.sentiment;
+            document.getElementById('confidenceLabel').textContent = data.confidence + '%';
+            document.getElementById('cleanedText').textContent = data.cleaned_text;
+
+            const resultBox = document.getElementById('resultBox');
+            resultBox.className = 'result ' + data.sentiment;
+            resultBox.style.display = 'block';
+        }
+
+        function addToHistory(data) {
+            analysisHistory.unshift({
+                text: data.original_text.substring(0, 60),
+                sentiment: data.sentiment,
+                confidence: data.confidence,
+                timestamp: new Date().toLocaleTimeString()
+            });
+
+            if (analysisHistory.length > 10) {
+                analysisHistory.pop();
+            }
+
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const historyContainer = document.getElementById('historyContainer');
+            
+            if (analysisHistory.length === 0) {
+                historyContainer.innerHTML = '<div class="empty-history">No analyses yet. Start by analyzing your first text!</div>';
+                return;
+            }
+
+            const badgeClass = {
+                'Positive': 'sentiment-badge-positive',
+                'Negative': 'sentiment-badge-negative',
+                'Neutral': 'sentiment-badge-neutral'
+            };
+
+            historyContainer.innerHTML = analysisHistory.map(item => `
+                <div class="history-item">
+                    <div class="history-text">${escapeHtml(item.text)}${item.text.length >= 60 ? '...' : ''}</div>
+                    <span class="history-sentiment ${badgeClass[item.sentiment]}">${item.sentiment}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearAll() {
+            document.getElementById('reviewText').value = '';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('reviewText').focus();
+        }
+
+        function copyText() {
+            const text = document.getElementById('cleanedText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copied to clipboard!');
+            }).catch(() => {
+                alert('❌ Failed to copy');
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Focus on textarea on load
+        document.getElementById('reviewText').focus();
+    </script>
+</body>
+</html>
+
+
